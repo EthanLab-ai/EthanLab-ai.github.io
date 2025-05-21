@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethan Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .home-icon {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #007bff;
+            z-index: 1000;
+        }
+        .home-icon:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div style="background-color: white; width: 100%; height: 80px;padding: 10px; position: fixed; top: 0; left: 0; z-index: 1000; display: flex; justify-content: center; align-items: center;">
+        <div class="home-icon" onclick="goHome()"><img src="../icon/光.png" style="width: 75px;height: 75px;"></div>
+    </div>
+    <div style="text-align: center; width: 100%; position: fixed; top: 150px;">
+        <button style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;" onclick="window.location.href='電子版答案之書/index.html'">
+            前往電子版答案之書
+        </button>
+    </div>
+    
+</body>
+</html>

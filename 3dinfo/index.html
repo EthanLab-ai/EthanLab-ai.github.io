@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="z5LxsVowkZZDyU5Gu-da5uf7uUSBVheEh0FuI7ZVUVI" />
+    <title>3D打印資訊網</title>
+    <style>
+        /* 基礎樣式 */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+        }
+
+        /* 篩選區樣式 */
+        .filter-section {
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        /* 商品列表樣式 */
+        .product-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* 比較功能樣式 */
+        .comparison-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: none; /* 修改為始終顯示 */
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+        .compareButton {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .compareButton:hover {
+            background: #218838;
+        }
+        /* 商品圖片統一尺寸 */
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+        /* 規格篩選樣式 */
+        .filter-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .filter-group h3 {
+            margin: 0 0 12px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .filter-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-option label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        /* 已選商品小圖標樣式 */
+        .selected-product {
+            position: relative;
+            width: 75px;
+            height: 75px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .selected-product-image {
+            width: 75%;
+            height: 75%;
+            object-fit: cover;
+            display: flex;
+        }
+
+        .remove-comparison {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        .remove-comparison:hover {
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+        }
+        .comparison-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .comparison-modal .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow: auto;
+            width: 800px;
+            position: relative;
+        }
+
+        .comparison-modal .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            color: #666;
+        }
+
+        .comparison-modal .close-btn:hover {
+            color: #333;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .comparison-table tr:hover {
+            background-color: #f1f1f1;
+        }/* 商品卡樣式 */
+        .product-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .product-info {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .product-info h3 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .price-tag {
+            font-size: 20px;
+            font-weight: bold;
+            color: #28a745;
+            margin: 8px 0;
+        }
+
+        .compare-checkbox {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .compare-checkbox input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        /* 整體佈局調整 */
+        body {
+            background-color: #f8f9fa;
+            padding: 30px;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filter-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .reset-btn {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .reset-btn:hover {
+            background: #e9ecef;
+        }
+
+        .price-range {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .price-range input {
+            width: 100px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* 套用篩選按鈕 */
+        button[onclick="applyFilters()"] {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button[onclick="applyFilters()"]:hover {
+            background: #218838;
+        }.product-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .product-info {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .product-info h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+            line-height: 1.2; /* 新增 */
+        }
+        .price-tag {
+            font-size: 20px;
+            font-weight: bold;
+            color: #28a745;
+            margin: 4px 0; /* 調整 */
+        }
+        .compare-checkbox {
+            margin-top: 8px; /* 調整 */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }.compare-checkbox input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        /* 整體佈局調整 */
+        body {
+            background-color: #f8f9fa;
+            padding: 30px;
+        }
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .filter-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+        .reset-btn {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .reset-btn:hover {
+            background: #e9ecef;
+        }
+        .price-range {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .price-range input {
+            width: 100px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        /* 套用篩選按鈕 */
+        button[onclick="applyFilters()"] {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button[onclick="applyFilters()"]:hover {
+            background: #218838;
+        }
+        .product-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* 新增 */
+        }
+        .product-info {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            gap: 8px; /* 新增 */
+        }
+        .product-info h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        .price-tag {
+            font-size: 20px;
+            font-weight: bold;
+            color: #28a745;
+            margin: 0; /* 修改 */
+        }
+        .compare-checkbox {
+            margin-top: 12px; /* 修改 */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+            min-height: 100vh; /* 新增 */
+        }
+
+        .product-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            align-content: start; /* 新增 */
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 380px; /* 新增 */
+        }
+
+        .product-info {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1; /* 新增 */
+        }/* 篩選區樣式 */
+        .filter-section {
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            margin-bottom: 100px; /* 新增：為比較區留出空間 */
+        }
+
+        /* 比較功能樣式 */
+        .comparison-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: none;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            max-width: 1400px; /* 新增：與頁面同寬 */
+            margin: 0 auto; /* 新增：居中 */
+            left: 50%; /* 新增 */
+            transform: translateX(-50%); /* 新增 */
+        }
+    </style>
+    <style>
+        .price-slider {
+            width: 100%;
+            margin: 15px 0;
+        }
+        .price-slider-container {
+            position: relative;
+            height: 40px;
+        }
+        .price-slider-values {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        .noUi-target {
+            background: #f0f0f0;
+            border-radius: 4px;
+            border: none;
+            box-shadow: none;
+        }
+        .noUi-connect {
+            background: #28a745;
+        }
+        .noUi-handle {
+            width: 18px;
+            height: 18px;
+            top: -7px;
+            right: -9px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #28a745;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .filter-group h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        /* 篩選選項容器 */
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* 單個篩選選項 */
+        .filter-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-option:hover {
+            border-color: #28a745;
+            background: #f1f8f3;
+        }
+
+        /* 選中狀態 */
+        .filter-option input:checked + label {
+            color: #28a745;
+        }
+
+        .filter-option input:checked ~ label::before {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+        /* 隱藏默認checkbox */
+        .filter-option input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            height: 0;
+            width: 0;
+        }
+
+        /* 自定義checkbox標籤 */
+        .filter-option label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: color 0.2s ease;
+        }
+
+        /* 自定義checkbox */
+        .filter-option label::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            transition: all 0.2s ease;
+        }
+        .filter-option input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+            accent-color: #28a745; /* 使用現代瀏覽器的原生樣式 */
+        }
+        #compareButton {
+            background: linear-gradient(135deg, #28a745, #218838);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #compareButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(135deg, #218838, #1e7e34);
+        }
+
+        #compareButton:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+        .compare-checkbox {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 12px;
+        }
+
+        .compare-checkbox:hover {
+            background: #e9ecef;
+            border-color: #28a745;
+        }
+
+        .compare-checkbox input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #28a745;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .compare-checkbox input[type="checkbox"]:checked {
+            background-color: #28a745;
+        }
+
+        .compare-checkbox span {
+            font-size: 14px;
+            color: #333;
+            white-space: nowrap;
+        }
+        .remove-comparison {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff4444;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .remove-comparison:hover {
+            background: #ff0000;
+            transform: scale(1.1);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .remove-comparison::before {
+            content: '×';
+            font-weight: bold;
+        }
+        .selected-product {
+            position: relative;
+            width: 75px;
+            height: 75px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px; /* 新增：增加間距 */
+        }
+
+        .remove-comparison {
+            position: absolute;
+            width: 24px; /* 稍微加大 */
+            height: 24px; /* 稍微加大 */
+            background: #ff4444;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 1; /* 確保按鈕在圖片上方 */
+        }
+        .selected-product {
+            position: relative;
+            width: 75px;
+            height: 75px;
+            border: 1px solid #ddd;
+            border-radius: 8px; /* 增加圓角 */
+            overflow: hidden;
+            margin: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 添加陰影 */
+            transition: all 0.3s ease; /* 添加過渡效果 */
+        }
+
+        .selected-product:hover {
+            transform: scale(1.05); /* hover時放大 */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* hover時陰影加深 */
+        }
+
+        .selected-product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: flex;
+            background: #f8f9fa; /* 添加背景色 */
+        }
+
+        .remove-comparison {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: #ff4444;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .remove-comparison:hover {
+            background: #ff0000;
+            transform: scale(1.1);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- 篩選區 -->
+    <div class="filter-section">
+        <div class="filter-header">
+            <h2>商品篩選</h2>
+            <button class="reset-btn" onclick="resetFilters()">重設條件</button>
+        </div>
+        
+        <!-- 價格篩選 -->
+        <div class="filter-group">
+            <h3>價格範圍</h3>
+            <div class="price-slider-container">
+                <div id="priceSlider"></div>
+                <div class="price-slider-values">
+                    <span id="minPriceValue">0</span>
+                    <span id="maxPriceValue">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 動態篩選條件 -->
+        <div id="dynamicFilters"></div>
+    </div>
+
+    <!-- 商品列表 -->
+    <div class="product-container" id="productContainer"></div>
+
+    <!-- 比較功能欄 -->
+    <div class="comparison-bar">
+        <div id="selectedProducts" style="display: flex; gap: 15px;"></div>
+        <button id="compareButton" onclick="openComparison()">立即比較</button>
+    </div>
+
+    <!-- 商品詳情彈窗 -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()"></span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let allProducts = [];
+        
+        // 初始化加載商品數據
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadProducts();
+            generateDynamicFilters();
+        });
+
+        // 加載商品數據
+        async function loadProducts() {
+            try {
+                const response = await fetch('data.json');
+                allProducts = await response.json();
+                displayProducts(allProducts);
+                logAvailableSpecs(); // 新增這行
+            } catch (error) {
+                console.error('無法載入商品資料:', error);
+            }
+        }
+        // 新增函數：輸出所有可選規格
+        function logAvailableSpecs() {
+            if (allProducts.length > 0) {
+                const specs = Object.keys(allProducts[0]).filter(key => !['id', 'name', 'image', 'price'].includes(key));
+                console.log('可選規格：', specs);
+            } else {
+                console.warn('沒有可用的商品數據');
+            }
+        }
+        // 顯示商品列表
+        // 在displayProducts函數中修改
+        function displayProducts(products) {
+            const container = document.getElementById('productContainer');
+            container.innerHTML = products.map(product => `
+                <div class="product-card" onclick="handleProductCardClick(${product.id})">
+                    <img src="${product.image}" class="product-image" alt="${product.name}" onerror="this.src='default-image.jpg'">
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <div style="margin-top: auto;">
+                            <p class="price-tag">RMB¥${product.price}</p>
+                            <label class="compare-checkbox" onclick="event.stopPropagation()">
+                                <input type="checkbox" data-id="${product.id}" onclick="event.stopPropagation(); toggleComparison(${product.id})">
+                                <span>加入比較</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showProductDetail(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            const modal = document.createElement('div');
+            modal.className = 'comparison-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close-btn" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                    <h2>${product.name}</h2>
+                    <img src="${product.image}" style="width: 100%; max-height: 300px; object-fit: contain; margin-bottom: 20px;">
+                    <div class="product-specs">
+                        <div class="price-tag">
+                            <strong>價格:</strong> RMB¥${product.price}
+                            <br>
+                            <br>
+                        </div>
+                        ${product.usdPrice ? `
+                            <div class="spec-item">
+                                <strong>美元價格:</strong> $${product.usdPrice}
+                            </div>
+                        ` : ''}
+                        ${Object.entries(product)
+                            .filter(([key]) => !['id', 'name', 'image', 'price', 'usdPrice'].includes(key))
+                            .map(([key, value]) => `
+                                <div class="spec-item">
+                                    <strong>${key}:</strong> ${value || 'N/A'}
+                                </div>
+                            `).join('')}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // 添加點擊外部關閉功能
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            // 添加ESC鍵關閉功能
+            document.addEventListener('keydown', function escClose(e) {
+                if (e.key === 'Escape') {
+                    modal.remove();
+                    document.removeEventListener('keydown', escClose);
+                }
+            });
+        }
+        // 比較功能相關邏輯
+        let selectedProducts = [];
+        // 在generateDynamicFilters函數中修改
+        function generateDynamicFilters() {
+            const filtersContainer = document.getElementById('dynamicFilters');
+            const allSpecs = Object.keys(allProducts[0]).filter(key => !['id', 'name', 'image', 'price', 'usdPrice'].includes(key));
+            allSpecs.forEach(spec => {
+                const uniqueValues = [...new Set(allProducts.map(p => p[spec]))];
+                const filterGroup = document.createElement('div');
+                filterGroup.className = 'filter-group';
+                filterGroup.innerHTML = `
+                    <h3>${spec}</h3>
+                    <div class="filter-options">
+                        ${uniqueValues.map(value => `
+                            <label class="filter-option">
+                                <input type="checkbox" id="${spec}-${value}" value="${value}" onchange="applyFilters()" style="opacity: 1; position: static; width: auto; height: auto;">
+                                <span>${value}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                filtersContainer.appendChild(filterGroup);
+            });
+        }
+        function toggleComparison(productId) {
+            const checkbox = document.querySelector(`input[data-id="${productId}"]`);
+            const index = selectedProducts.indexOf(productId);
+            
+            if (index > -1) {
+                selectedProducts.splice(index, 1);
+                checkbox.checked = false; // 同步更新checkbox狀態
+            } else {
+                selectedProducts.push(productId);
+                checkbox.checked = true; // 同步更新checkbox狀態
+            }
+            updateComparisonBar();
+        }
+        function updateComparisonBar() {
+            const bar = document.querySelector('.comparison-bar');
+            const container = document.getElementById('selectedProducts');
+            
+            // 完全清空內容
+            while (container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
+            
+            // 如果有選中商品才顯示內容
+            if (selectedProducts.length > 0) {
+                selectedProducts.forEach(id => {
+                    const product = allProducts.find(p => p.id === id);
+                    const productDiv = document.createElement('div');
+                    productDiv.className = 'selected-product';
+                    productDiv.innerHTML = `
+                        <img src="${product.image}" class="selected-product-image" alt="${product.name}">
+                        <span class="remove-comparison" onclick="toggleComparison(${id})"></span>
+                    `;
+                    container.appendChild(productDiv);
+                });
+                bar.style.display = 'flex';
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+        function openComparison() {
+            const productsToCompare = allProducts.filter(p => selectedProducts.includes(p.id));
+            if (productsToCompare.length < 2) {
+                alert('請至少選擇2個產品進行比較');
+                return;
+            }
+            
+            // 獲取所有需要比較的規格
+            const allSpecs = Object.keys(allProducts[0]).filter(key => !['id', 'name', 'image'].includes(key));
+            
+            // 將price和usdPrice轉換為中文
+            const translatedSpecs = allSpecs.map(spec => {
+                if (spec === 'price') return '價格';
+                if (spec === 'usdPrice') return '美元價格';
+                return spec;
+            });
+            
+            // 比較彈窗內容
+            const comparisonContent = `
+                <div class="comparison-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>規格</th>
+                                ${productsToCompare.map(p => `<th>${p.name}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${translatedSpecs.map((spec, index) => `
+                                <tr>
+                                    <td>${spec}</td>
+                                    ${productsToCompare.map(p => `<td>${p[allSpecs[index]] || 'N/A'}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // 創建比較彈窗
+            const modal = document.createElement('div');
+            modal.className = 'comparison-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close-btn" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                    <h2>產品比較</h2>
+                    ${comparisonContent}
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // 添加點擊外部關閉功能
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            // 添加ESC鍵關閉功能
+            document.addEventListener('keydown', function escClose(e) {
+                if (e.key === 'Escape') {
+                    modal.remove();
+                    document.removeEventListener('keydown', escClose);
+                }
+            });
+        }
+        function applyFilters() {
+            let filteredProducts = allProducts;
+            
+            // 價格篩選
+            const slider = document.getElementById('priceSlider');
+            const [minPrice, maxPrice] = slider.noUiSlider.get();
+            filteredProducts = filteredProducts.filter(p => p.price >= minPrice && p.price <= maxPrice);
+            if (!isNaN(minPrice)) {
+                filteredProducts = filteredProducts.filter(p => p.price >= minPrice);
+            }
+            if (!isNaN(maxPrice)) {
+                filteredProducts = filteredProducts.filter(p => p.price <= maxPrice);
+            }
+            
+            // 動態規格篩選
+            const filterGroups = document.querySelectorAll('.filter-group');
+            filterGroups.forEach(group => {
+                const checkedOptions = group.querySelectorAll('input[type="checkbox"]:checked');
+                if (checkedOptions.length > 0) {
+                    const spec = checkedOptions[0].id.split('-')[0];
+                    const values = Array.from(checkedOptions).map(option => option.value);
+                    filteredProducts = filteredProducts.filter(p => values.includes(p[spec]));
+                }
+            });
+            // 從待比較區移除不符合篩選條件的商品
+            selectedProducts = selectedProducts.filter(id => {
+                const product = allProducts.find(p => p.id === id);
+                return filteredProducts.includes(product);
+            });
+            displayProducts(filteredProducts);
+            updateComparisonBar(); // 更新比較區顯示
+            // 重新設置checkbox狀態
+            selectedProducts.forEach(id => {
+                const checkbox = document.querySelector(`input[data-id="${id}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        }
+        function resetFilters() {
+            // 重置價格滑塊
+            const slider = document.getElementById('priceSlider');
+            if (slider.noUiSlider) {
+                const priceRange = [0, Math.max(...allProducts.map(p => p.price))];
+                slider.noUiSlider.set(priceRange);
+                slider.noUiSlider.updateOptions({
+                    range: {
+                        'min': priceRange[0],
+                        'max': priceRange[1]
+                    }
+                });
+            }
+
+            // 重置所有規格篩選
+            const checkboxes = document.querySelectorAll('.filter-options input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            
+            // 重新顯示所有商品
+            displayProducts(allProducts);
+            
+            // 重置比較區
+            selectedProducts = [];
+            updateComparisonBar();
+            
+            // 重置所有比較checkbox
+            const compareCheckboxes = document.querySelectorAll('.compare-checkbox input');
+            compareCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.disabled = false;
+            });
+            
+            // 強制重新渲染比較區
+            const bar = document.querySelector('.comparison-bar');
+            bar.style.display = 'none';
+        }
+        function handleProductCardClick(productId) {
+            const checkbox = document.querySelector(`input[data-id="${productId}"]`);
+            if (!checkbox.checked) {
+                showProductDetail(productId);
+            }
+        }
+        function initPriceSlider() {
+            const priceRange = [0, Math.max(...allProducts.map(p => p.price))];
+            const slider = document.getElementById('priceSlider');
+            
+            noUiSlider.create(slider, {
+                start: priceRange,
+                connect: true,
+                range: {
+                    'min': priceRange[0],
+                    'max': priceRange[1]
+                },
+                step: 1
+            });
+
+            // 添加滑塊更新事件
+            slider.noUiSlider.on('update', function(values) {
+                document.getElementById('minPriceValue').textContent = `RMB¥${Math.round(values[0])}`;
+                document.getElementById('maxPriceValue').textContent = `RMB¥${Math.round(values[1])}`;
+                applyFilters(); // 添加這行，滑塊變動時自動篩選
+            });
+        }
+
+    // 在加載商品數據後初始化滑塊
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadProducts();
+        initPriceSlider();
+        generateDynamicFilters();
+    });
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" />
+</body>
+</html>
